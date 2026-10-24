@@ -9,6 +9,7 @@ import android.net.NetworkCapabilities
 import android.net.Uri
 import android.os.Build
 import android.os.Bundle
+import android.os.Message
 import android.view.View
 import android.webkit.CookieManager
 import android.webkit.ValueCallback
@@ -25,26 +26,20 @@ import androidx.appcompat.app.AppCompatActivity
 import androidx.core.splashscreen.SplashScreen.Companion.installSplashScreen
 import androidx.swiperefreshlayout.widget.SwipeRefreshLayout
 
-/**
- * Moviiea — main (and only) screen of the app.
- *
- * The app is a native "shell" around the Moviiea website:
- *   - website loads in a secure WebView
- *   - pull down to refresh
- *   - friendly offline screen with a Retry button
- *   - phone Back button moves between pages before leaving the app
- *   - links to other websites open in the phone browser
- */
 class MainActivity : AppCompatActivity() {
 
     companion object {
-        /** The website the app opens. Change this if the site address ever changes. */
         private const val HOME_URL = "https://moviiea.blogspot.com/"
 
-        /** Links inside the app: the site itself and any other Blogger blog. */
-        private fun isInAppUrl(url: Uri): Boolean {
+        private val SOCIAL_HOSTS = listOf(
+            "facebook.com", "twitter.com", "x.com", "instagram.com",
+            "youtube.com", "youtu.be", "t.me", "telegram.me",
+            "wa.me", "whatsapp.com", "pinterest.com", "reddit.com"
+        )
+
+        private fun isSocialLink(url: Uri): Boolean {
             val host = url.host?.lowercase() ?: return false
-            return host == "moviiea.blogspot.com" || host.endsWith(".blogspot.com")
+            return SOCIAL_HOSTS.any { host == it || host.endsWith(".$it") }
         }
     }
 
@@ -56,7 +51,6 @@ class MainActivity : AppCompatActivity() {
     private var filePathCallback: ValueCallback<Array<Uri>>? = null
 
     override fun onCreate(savedInstanceState: Bundle?) {
-        // Splash screen (brand background + app icon) until the app is ready.
         installSplashScreen()
         super.onCreate(savedInstanceState)
         setContentView(R.layout.activity_main)
@@ -81,8 +75,6 @@ class MainActivity : AppCompatActivity() {
         }
     }
 
-    // ------------------------------------------------------------------ setup
-
     @SuppressLint("SetJavaScriptEnabled")
     private fun setupWebView() {
         webView.settings.apply {
@@ -90,10 +82,14 @@ class MainActivity : AppCompatActivity() {
             domStorageEnabled = true
             loadWithOverviewMode = true
             useWideViewPort = true
-            mixedContentMode = android.webkit.WebSettings.MIXED_CONTENT_COMPATIBILITY_MODE
+
+            mediaPlaybackRequiresUserGesture = false
+            mixedContentMode = android.webkit.WebSettings.MIXED_CONTENT_ALWAYS_ALLOW
+            setSupportMultipleWindows(true)
+            setJavaScriptCanOpenWindowsAutomatically(true)
+            userAgentString = userAgentString.replace("; wv)", ")")
         }
 
-        // Keep the site logged-in state (cookies) between visits.
         CookieManager.getInstance().setAcceptCookie(true)
         if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.LOLLIPOP) {
             CookieManager.getInstance().setAcceptThirdPartyCookies(webView, true)
@@ -127,7 +123,6 @@ class MainActivity : AppCompatActivity() {
                 request: WebResourceRequest,
                 error: WebResourceError
             ) {
-                // Only react to errors of the main page, not of single images etc.
                 if (request.isForMainFrame && !isOnline()) {
                     showOfflineScreen()
                 }
@@ -153,7 +148,30 @@ class MainActivity : AppCompatActivity() {
                 progressBar.visibility = if (newProgress in 1..99) View.VISIBLE else View.GONE
             }
 
-            // Allow the site to open the phone's file picker (e.g. attach forms).
+            override fun onCreateWindow(
+                view: WebView?,
+                isDialog: Boolean,
+                isUserGesture: Boolean,
+                resultMsg: Message?
+            ): Boolean {
+                val tempView = WebView(view?.context ?: this@MainActivity)
+                tempView.webViewClient = object : WebViewClient() {
+                    override fun shouldOverrideUrlLoading(v: WebView, request: WebResourceRequest): Boolean {
+                        routePopup(request.url)
+                        return true
+                    }
+
+                    @Deprecated("Used by old WebView versions")
+                    override fun shouldOverrideUrlLoading(v: WebView, url: String): Boolean {
+                        routePopup(Uri.parse(url))
+                        return true
+                    }
+                }
+                (resultMsg?.obj as? WebView.WebViewTransport)?.webView = tempView
+                resultMsg?.sendToTarget()
+                return true
+            }
+
             override fun onShowFileChooser(
                 view: WebView?,
                 callback: ValueCallback<Array<Uri>>,
@@ -176,27 +194,33 @@ class MainActivity : AppCompatActivity() {
         }
     }
 
-    /** Decide where a clicked link goes: inside the app or in the phone browser. */
     private fun handleUrl(url: Uri): Boolean {
         val scheme = url.scheme?.lowercase()
-        when (scheme) {
+        return when (scheme) {
             "http", "https" -> {
-                return if (isInAppUrl(url)) {
-                    false // keep it inside the WebView
-                } else {
+                if (isSocialLink(url)) {
                     openExternally(url)
                     true
+                } else {
+                    false
                 }
             }
-            "mailto", "tel", "sms", "whatsapp", "tg" -> {
+            "mailto", "tel", "sms", "whatsapp", "tg", "intent" -> {
                 openExternally(url)
-                return true
+                true
             }
-            "intent" -> {
+            else -> true
+        }
+    }
+
+    private fun routePopup(url: Uri) {
+        val scheme = url.scheme?.lowercase()
+        if (scheme == "http" || scheme == "https") {
+            if (isSocialLink(url)) {
                 openExternally(url)
-                return true
+            } else {
+                webView.loadUrl(url.toString())
             }
-            else -> return true // block unknown schemes silently
         }
     }
 
@@ -239,8 +263,6 @@ class MainActivity : AppCompatActivity() {
         })
     }
 
-    // ------------------------------------------------------------- offline UI
-
     private fun showOfflineScreen() {
         swipeRefresh.isRefreshing = false
         progressBar.visibility = View.GONE
@@ -261,8 +283,6 @@ class MainActivity : AppCompatActivity() {
             return info != null && info.isConnected
         }
     }
-
-    // --------------------------------------------------------- retry / results
 
     fun onRetryClicked(view: View) {
         if (isOnline()) {
@@ -286,8 +306,6 @@ class MainActivity : AppCompatActivity() {
             super.onActivityResult(requestCode, resultCode, data)
         }
     }
-
-    // ----------------------------------------------------------- state & menu
 
     override fun onSaveInstanceState(outState: Bundle) {
         super.onSaveInstanceState(outState)
