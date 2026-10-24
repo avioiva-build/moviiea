@@ -4,6 +4,8 @@
     <color name="brand_red">#E63946</color>
     <color name="brand_dark">#091E49</color>
     <color name="background">#091E49</color>
+    <color name="surface">#0E2850</color>
+    <color name="surface_light">#16305C</color>
     <color name="text_primary">#FFFFFF</color>
     <color name="text_secondary">#B7C0D0</color>
     <color name="text_on_brand">#FFFFFF</color>

@@ -1,11 +1,14 @@
 <?xml version="1.0" encoding="utf-8"?>
 <resources>
 
-    <!-- Main app theme: dark cinema look, no action bar (the website has its own header) -->
-    <style name="Theme.Moviiea" parent="Theme.AppCompat.NoActionBar">
+    <!-- Main app theme: dark cinema look, no action bar (the app has its own header) -->
+    <style name="Theme.Moviiea" parent="Theme.MaterialComponents.NoActionBar">
         <item name="android:windowBackground">@color/background</item>
         <item name="colorPrimary">@color/brand_red</item>
+        <item name="colorPrimaryVariant">@color/brand_dark</item>
         <item name="colorPrimaryDark">@color/brand_dark</item>
+        <item name="colorSecondary">@color/brand_red</item>
+        <item name="colorSecondaryVariant">@color/brand_dark</item>
         <item name="colorAccent">@color/brand_red</item>
         <item name="android:statusBarColor">@color/brand_dark</item>
         <item name="android:navigationBarColor">@color/brand_dark</item>
@@ -16,6 +19,28 @@
         <item name="windowSplashScreenBackground">@color/brand_dark</item>
         <item name="windowSplashScreenAnimatedIcon">@mipmap/ic_launcher</item>
         <item name="postSplashScreenTheme">@style/Theme.Moviiea</item>
+    </style>
+
+    <!-- Dark styling for the search box -->
+    <style name="ThemeOverlay.Moviiea.Search" parent="ThemeOverlay.MaterialComponents.Dark">
+        <item name="android:editTextColor">@color/text_primary</item>
+        <item name="android:textColorHint">#8A97B0</item>
+        <item name="colorControlActivated">@color/brand_red</item>
+    </style>
+
+    <!-- Category pills (Trending / Movies / TV Shows) -->
+    <style name="MoviieaChip">
+        <item name="android:background">@drawable/chip_bg</item>
+        <item name="android:paddingStart">18dp</item>
+        <item name="android:paddingEnd">18dp</item>
+        <item name="android:paddingTop">8dp</item>
+        <item name="android:paddingBottom">8dp</item>
+        <item name="android:textColor">@color/text_primary</item>
+        <item name="android:textSize">14sp</item>
+        <item name="android:textStyle">bold</item>
+        <item name="android:layout_marginEnd">8dp</item>
+        <item name="android:clickable">true</item>
+        <item name="android:focusable">true</item>
     </style>
 
 </resources>
