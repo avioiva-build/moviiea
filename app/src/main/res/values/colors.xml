@@ -1,0 +1,11 @@
+<?xml version="1.0" encoding="utf-8"?>
+<resources>
+    <!-- Moviiea brand colors -->
+    <color name="brand_red">#E63946</color>
+    <color name="brand_dark">#091E49</color>
+    <color name="background">#091E49</color>
+    <color name="text_primary">#FFFFFF</color>
+    <color name="text_secondary">#B7C0D0</color>
+    <color name="text_on_brand">#FFFFFF</color>
+    <color name="ic_launcher_background">#091E49</color>
+</resources>

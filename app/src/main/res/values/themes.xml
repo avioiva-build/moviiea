@@ -1,0 +1,21 @@
+<?xml version="1.0" encoding="utf-8"?>
+<resources>
+
+    <!-- Main app theme: dark cinema look, no action bar (the website has its own header) -->
+    <style name="Theme.Moviiea" parent="Theme.AppCompat.NoActionBar">
+        <item name="android:windowBackground">@color/background</item>
+        <item name="colorPrimary">@color/brand_red</item>
+        <item name="colorPrimaryDark">@color/brand_dark</item>
+        <item name="colorAccent">@color/brand_red</item>
+        <item name="android:statusBarColor">@color/brand_dark</item>
+        <item name="android:navigationBarColor">@color/brand_dark</item>
+    </style>
+
+    <!-- Splash (launch) theme: shows the icon on the brand background while the app starts -->
+    <style name="Theme.Moviiea.Splash" parent="Theme.SplashScreen">
+        <item name="windowSplashScreenBackground">@color/brand_dark</item>
+        <item name="windowSplashScreenAnimatedIcon">@mipmap/ic_launcher</item>
+        <item name="postSplashScreenTheme">@style/Theme.Moviiea</item>
+    </style>
+
+</resources>
