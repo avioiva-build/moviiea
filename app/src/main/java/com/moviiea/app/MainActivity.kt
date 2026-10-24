@@ -22,6 +22,7 @@ import android.widget.Button
 import android.widget.LinearLayout
 import android.widget.ProgressBar
 import android.widget.Toast
+import androidx.appcompat.app.AlertDialog
 import androidx.appcompat.app.AppCompatActivity
 import androidx.core.splashscreen.SplashScreen.Companion.installSplashScreen
 import androidx.swiperefreshlayout.widget.SwipeRefreshLayout
@@ -30,6 +31,8 @@ class MainActivity : AppCompatActivity() {
 
     companion object {
         private const val HOME_URL = "https://moviiea.blogspot.com/"
+
+        private const val PLAYER_PAGE = "https://avioiva-build.github.io/moviiea-app/player.html"
 
         private val SOCIAL_HOSTS = listOf(
             "facebook.com", "twitter.com", "x.com", "instagram.com",
@@ -49,6 +52,9 @@ class MainActivity : AppCompatActivity() {
     private lateinit var errorView: LinearLayout
 
     private var filePathCallback: ValueCallback<Array<Uri>>? = null
+
+    private var lastDismissedTarget: Uri? = null
+    private var askDialog: AlertDialog? = null
 
     override fun onCreate(savedInstanceState: Bundle?) {
         installSplashScreen()
@@ -116,6 +122,7 @@ class MainActivity : AppCompatActivity() {
                 super.onPageFinished(view, url)
                 progressBar.visibility = View.GONE
                 swipeRefresh.isRefreshing = false
+                patchPlayerToBrowser(view)
             }
 
             override fun onReceivedError(
@@ -194,9 +201,74 @@ class MainActivity : AppCompatActivity() {
         }
     }
 
+    /**
+     * The site plays videos through VidAPI / VidSrc / 2Embed iframes, but those
+     * servers block every WebView request. This patch reroutes each play
+     * action to the native side, which hands it to Chrome.
+     */
+    private fun patchPlayerToBrowser(view: WebView?) {
+        val js = """
+            (function() {
+              if (window.__mvBridge) return;
+              window.__mvBridge = true;
+              function hook() {
+                if (!window.Player || typeof Player.loadVideo !== 'function') { setTimeout(hook, 400); return; }
+                if (Player.__mvHooked) return;
+                Player.__mvHooked = true;
+                Player.loadVideo = function() {
+                  try {
+                    var s = CONFIG.SERVERS[State.activeServer];
+                    var u = State.activeType === 'movie'
+                      ? s.movie(State.activeId)
+                      : s.tv(State.activeId, document.getElementById('ep-season').value, document.getElementById('ep-episode').value);
+                    if (u) { location.href = 'moviiea-play:' + encodeURIComponent(u); }
+                  } catch (e) {}
+                };
+              }
+              hook();
+            })();
+        """.trimIndent()
+        view?.evaluateJavascript(js, null)
+    }
+
+    private fun askToPlayInBrowser(target: Uri) {
+        if (target == lastDismissedTarget) return
+        if (askDialog?.isShowing == true) return
+        val wrapper = Uri.parse(PLAYER_PAGE).buildUpon()
+            .appendQueryParameter("u", target.toString())
+            .build()
+        askDialog = AlertDialog.Builder(this)
+            .setTitle("Watch in browser")
+            .setMessage(
+                "Video servers only allow real browsers, so playback opens in Chrome. " +
+                    "Press Back in Chrome to return to the app."
+            )
+            .setPositiveButton("Watch") { _, _ -> openInChrome(wrapper) }
+            .setNegativeButton("Not now") { _, _ -> lastDismissedTarget = target }
+            .show()
+    }
+
+    private fun openInChrome(uri: Uri) {
+        try {
+            startActivity(Intent(Intent.ACTION_VIEW, uri).apply { setPackage("com.android.chrome") })
+        } catch (e: ActivityNotFoundException) {
+            openExternally(uri)
+        }
+    }
+
     private fun handleUrl(url: Uri): Boolean {
         val scheme = url.scheme?.lowercase()
         return when (scheme) {
+            "moviiea-play" -> {
+                val raw = url.encodedSchemeSpecificPart
+                if (!raw.isNullOrBlank()) {
+                    val target = Uri.parse(Uri.decode(raw))
+                    if (target.scheme == "http" || target.scheme == "https") {
+                        askToPlayInBrowser(target)
+                    }
+                }
+                true
+            }
             "http", "https" -> {
                 if (isSocialLink(url)) {
                     openExternally(url)
