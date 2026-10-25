@@ -102,7 +102,7 @@ object Tmdb {
             } catch (e: Exception) {
                 ok = false
             }
-            main.execute { onDone(ok) }
+            main.post { onDone(ok) }
         }
     }
 
@@ -112,9 +112,9 @@ object Tmdb {
         pool.execute {
             try {
                 val result = work()
-                main.execute { onDone(result) }
+                main.post { onDone(result) }
             } catch (e: Exception) {
-                main.execute { onError(e.message ?: "Network error") }
+                main.post { onError(e.message ?: "Network error") }
             }
         }
     }

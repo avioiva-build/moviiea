@@ -1,8 +1,8 @@
 <?xml version="1.0" encoding="utf-8"?>
 <resources>
     <string name="app_name">Moviiea</string>
-    <string name="offline_title">You\\'re offline</string>
-    <string name="offline_message">It looks like the internet is not working right now.\\nCheck your connection and try again.</string>
+    <string name="offline_title">You\'re offline</string>
+    <string name="offline_message">It looks like the internet is not working right now.\nCheck your connection and try again.</string>
     <string name="retry">Retry</string>
     <string name="still_offline">Still no internet connection</string>
     <string name="no_app_for_link">No app found to open this link</string>
@@ -12,22 +12,22 @@
     <string name="chip_trending">Trending</string>
     <string name="chip_movies">Movies</string>
     <string name="chip_tv">TV Shows</string>
-    <string name="no_results_message">No results found.\\nTry a different search.</string>
-    <string name="error_generic">Something went wrong.\\nPlease try again.</string>
+    <string name="no_results_message">No results found.\nTry a different search.</string>
+    <string name="error_generic">Something went wrong.\nPlease try again.</string>
 
     <string name="watch_now">Watch now</string>
     <string name="server_label">Server</string>
     <string name="season_label">Season</string>
     <string name="episode_label">Episode</string>
     <string name="play">Play</string>
-    <string name="play_hint">Playback opens in Chrome — press Back to return to Moviiea.</string>
+    <string name="play_hint">Playback opens in Chrome - press Back to return to Moviiea.</string>
     <string name="server_tip">If one server fails, try another one above.</string>
     <string name="overview_title">Storyline</string>
     <string name="more_like_this">More like this</string>
 
     <string name="no_browser">No browser app found on this phone</string>
     <string name="bridge_missing_title">Player page not found</string>
-    <string name="bridge_missing_message">The one-time player setup on GitHub Pages is not active yet.\\n\\n1. Open your moviiea-app repository on github.com\\n2. Go to Settings, then Pages\\n3. Under Source choose: Deploy from a branch\\n4. Branch: main — Folder: / (root) — then click Save\\n5. Wait about one minute\\n\\nThen come back to the app and tap Play again.</string>
+    <string name="bridge_missing_message">The one-time player setup on GitHub Pages is not active yet.\n\n1. Open your moviiea-app repository on github.com\n2. Go to Settings, then Pages\n3. Under Source choose: Deploy from a branch\n4. Branch: main - Folder: / (root) - then click Save\n5. Wait about one minute\n\nThen come back to the app and tap Play again.</string>
     <string name="ok">OK</string>
-    <string name="details_unavailable">Could not load details.\\nCheck your connection and try again.</string>
+    <string name="details_unavailable">Could not load details.\nCheck your connection and try again.</string>
 </resources>
