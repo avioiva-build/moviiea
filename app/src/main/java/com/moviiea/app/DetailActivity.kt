@@ -32,7 +32,7 @@ import java.util.Locale
  */
 class DetailActivity : AppCompatActivity() {
 
-    private companion object {
+    companion object {
         const val EXTRA_ID = "id"
         const val EXTRA_IS_MOVIE = "isMovie"
         const val EXTRA_TITLE = "title"
@@ -124,7 +124,9 @@ class DetailActivity : AppCompatActivity() {
     }
 
     private fun styleSpinner(spinner: Spinner) {
-        spinner.popupBackground = ColorDrawable(0xFF16305C.toInt())
+        // Note: Spinner has getPopupBackground() but the setter is named
+        // setPopupBackgroundDrawable(), so we call the method directly.
+        spinner.setPopupBackgroundDrawable(ColorDrawable(0xFF16305C.toInt()))
     }
 
     private fun listener(onSelected: (Int) -> Unit): AdapterView.OnItemSelectedListener =
