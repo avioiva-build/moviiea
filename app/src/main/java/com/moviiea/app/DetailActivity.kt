@@ -59,7 +59,7 @@ class DetailActivity : AppCompatActivity() {
     private lateinit var errorView: LinearLayout
     private lateinit var recyclerSimilar: RecyclerView
     private lateinit var textSimilarHeader: TextView
-    private lateinit var btnFavDetail: ImageButton
+    private lateinit var btnFavDetail: ImageView
 
     private var id = 0
     private var isMovie = true
