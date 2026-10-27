@@ -7,10 +7,12 @@ import android.os.Bundle
 import android.view.View
 import android.widget.AdapterView
 import android.widget.ArrayAdapter
+import android.widget.ImageButton
 import android.widget.LinearLayout
 import android.widget.ProgressBar
 import android.widget.Spinner
 import android.widget.TextView
+import android.widget.Toast
 import androidx.appcompat.app.AlertDialog
 import androidx.appcompat.app.AppCompatActivity
 import androidx.appcompat.widget.AppCompatButton
@@ -57,12 +59,15 @@ class DetailActivity : AppCompatActivity() {
     private lateinit var errorView: LinearLayout
     private lateinit var recyclerSimilar: RecyclerView
     private lateinit var textSimilarHeader: TextView
+    private lateinit var btnFavDetail: ImageButton
 
     private var id = 0
     private var isMovie = true
     private var season = 1
     private var episode = 1
     private var currentDetail: Tmdb.Details? = null
+    private var initialTitle = ""
+    private var initialPoster: String? = null
 
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
@@ -70,12 +75,12 @@ class DetailActivity : AppCompatActivity() {
 
         id = intent.getIntExtra(EXTRA_ID, 0)
         isMovie = intent.getBooleanExtra(EXTRA_IS_MOVIE, true)
-        val title = intent.getStringExtra(EXTRA_TITLE) ?: ""
-        val poster = intent.getStringExtra(EXTRA_POSTER)
+        initialTitle = intent.getStringExtra(EXTRA_TITLE) ?: ""
+        initialPoster = intent.getStringExtra(EXTRA_POSTER)
 
         // Instant first paint from the grid, details arrive a moment later.
-        findViewById<TextView>(R.id.textTitle).text = title
-        findViewById<AppCompatImageView>(R.id.imgPoster).load(poster) {
+        findViewById<TextView>(R.id.textTitle).text = initialTitle
+        findViewById<AppCompatImageView>(R.id.imgPoster).load(initialPoster) {
             placeholder(R.drawable.poster_ph)
             error(R.drawable.poster_ph)
         }
@@ -94,6 +99,18 @@ class DetailActivity : AppCompatActivity() {
         findViewById<AppCompatButton>(R.id.btnDetailRetry).setOnClickListener { loadDetails() }
         findViewById<AppCompatButton>(R.id.btnPlay).setOnClickListener { onPlayClicked() }
 
+        btnFavDetail = findViewById(R.id.btnFavDetail)
+        updateFavIcon()
+        btnFavDetail.setOnClickListener {
+            val nowFav = FavoritesStore.toggle(this, asTitle())
+            updateFavIcon()
+            Toast.makeText(
+                this,
+                if (nowFav) R.string.added_to_mylist else R.string.removed_from_mylist,
+                Toast.LENGTH_SHORT
+            ).show()
+        }
+
         setupServerSpinner()
         styleSpinner(spinnerServer)
         styleSpinner(spinnerSeason)
@@ -108,6 +125,25 @@ class DetailActivity : AppCompatActivity() {
         }
 
         loadDetails()
+    }
+
+    // ------------------------------------------------------------- favorites
+
+    /** A Title built from everything we currently know about this screen. */
+    private fun asTitle(): Tmdb.Title = Tmdb.Title(
+        id = id,
+        isMovie = isMovie,
+        name = currentDetail?.name ?: initialTitle,
+        poster = currentDetail?.poster ?: initialPoster,
+        rating = currentDetail?.rating ?: 0.0,
+        year = currentDetail?.year ?: ""
+    )
+
+    private fun updateFavIcon() {
+        btnFavDetail.setImageResource(
+            if (FavoritesStore.contains(this, id)) R.drawable.ic_heart_filled
+            else R.drawable.ic_heart
+        )
     }
 
     // ------------------------------------------------------------- spinners
@@ -221,9 +257,9 @@ class DetailActivity : AppCompatActivity() {
         } else {
             textSimilarHeader.visibility = View.VISIBLE
             recyclerSimilar.visibility = View.VISIBLE
-            recyclerSimilar.adapter = GridAdapter(R.layout.item_similar) { item ->
+            recyclerSimilar.adapter = GridAdapter(R.layout.item_similar, { item ->
                 DetailActivity.start(this, item)
-            }
+            })
             (recyclerSimilar.adapter as GridAdapter).submit(d.similar, false)
         }
     }

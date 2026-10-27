@@ -12,6 +12,15 @@
     <string name="chip_trending">Trending</string>
     <string name="chip_movies">Movies</string>
     <string name="chip_tv">TV Shows</string>
+    <string name="chip_mylist">My List</string>
+    <string name="lang_all">All</string>
+    <string name="lang_english">English</string>
+    <string name="lang_hindi">Hindi</string>
+    <string name="lang_bengali">Bengali</string>
+    <string name="lang_korean">Korean</string>
+    <string name="mylist_empty_message">Your My List is empty.\nTap the heart on any movie or show to save it here.</string>
+    <string name="added_to_mylist">Added to My List</string>
+    <string name="removed_from_mylist">Removed from My List</string>
     <string name="no_results_message">No results found.\nTry a different search.</string>
     <string name="error_generic">Something went wrong.\nPlease try again.</string>
 
@@ -27,7 +36,7 @@
 
     <string name="no_browser">No browser app found on this phone</string>
     <string name="bridge_missing_title">Player page not found</string>
-    <string name="bridge_missing_message">The one-time player setup on GitHub Pages is not active yet.\n\n1. Open your moviiea-app repository on github.com\n2. Go to Settings, then Pages\n3. Under Source choose: Deploy from a branch\n4. Branch: main - Folder: / (root) - then click Save\n5. Wait about one minute\n\nThen come back to the app and tap Play again.</string>
+    <string name="bridge_missing_message">The one-time player setup on GitHub Pages is not active yet.\n\n1. Open your moviiea repository on github.com\n2. Go to Settings, then Pages\n3. Under Source choose: Deploy from a branch\n4. Branch: main - Folder: / (root) - then click Save\n5. Wait about one minute\n\nThen come back to the app and tap Play again.</string>
     <string name="ok">OK</string>
     <string name="details_unavailable">Could not load details.\nCheck your connection and try again.</string>
 </resources>

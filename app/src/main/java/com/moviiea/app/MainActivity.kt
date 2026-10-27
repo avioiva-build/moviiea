@@ -44,9 +44,11 @@ class MainActivity : AppCompatActivity() {
     private lateinit var errorMessage: TextView
     private lateinit var searchView: SearchView
 
-    private val chips = ArrayList<View>(3)
+    private val chips = ArrayList<View>(4)
+    private lateinit var langChips: List<Pair<View, String>>
 
-    private var section = "trending"   // trending | movie | tv
+    private var section = "trending"   // trending | movie | tv | mylist
+    private var lang = ""              // "" = all, en, hi, bn, ko
     private var query: String? = null  // non-null while searching
     private var page = 1
     private var loading = false
@@ -66,7 +68,7 @@ class MainActivity : AppCompatActivity() {
         errorMessage = findViewById(R.id.errorMessage)
         searchView = findViewById(R.id.searchView)
 
-        adapter = GridAdapter(R.layout.item_movie) { openDetails(it) }
+        adapter = GridAdapter(R.layout.item_movie, { openDetails(it) }, { onFavChanged() })
         layoutManager = GridLayoutManager(this, SPAN_COUNT)
         val recycler = findViewById<RecyclerView>(R.id.recyclerGrid)
         recycler.layoutManager = layoutManager
@@ -91,35 +93,58 @@ class MainActivity : AppCompatActivity() {
     // ------------------------------------------------------------- sections
 
     private fun setupChips() {
+        // --- Row 1: Trending / Movies / TV Shows / My List
         chips.clear()
         chips.add(findViewById(R.id.chipTrending))
         chips.add(findViewById(R.id.chipMovies))
         chips.add(findViewById(R.id.chipTv))
+        chips.add(findViewById(R.id.chipMyList))
+        val sections = listOf("trending", "movie", "tv", "mylist")
         chips.forEachIndexed { index, chip ->
             chip.setOnClickListener {
-                val target = when (index) {
-                    1 -> "movie"
-                    2 -> "tv"
-                    else -> "trending"
-                }
-                selectSection(target)
+                section = sections[index]
+                query = null
+                searchView.setQuery("", false)
+                searchView.clearFocus()
+                updateChipLook()
+                refresh()
             }
         }
         updateChipLook()
-    }
 
-    private fun selectSection(newSection: String) {
-        section = newSection
-        query = null
-        searchView.setQuery("", false)
-        searchView.clearFocus()
-        updateChipLook()
-        refresh()
+        // --- Row 2: language pills (same filter the website uses)
+        langChips = listOf(
+            findViewById<View>(R.id.langAll) to "",
+            findViewById<View>(R.id.langEnglish) to "en",
+            findViewById<View>(R.id.langHindi) to "hi",
+            findViewById<View>(R.id.langBengali) to "bn",
+            findViewById<View>(R.id.langKorean) to "ko"
+        )
+        langChips.forEach { (chip, code) ->
+            chip.setOnClickListener {
+                if (lang == code) return@setOnClickListener
+                lang = code
+                updateLangLook()
+                // My List is local and search is keyword-based, so only the
+                // browsing feed reacts to language changes.
+                if (section != "mylist" && query == null) refresh()
+            }
+        }
+        updateLangLook()
     }
 
     private fun updateChipLook() {
-        val sections = listOf("trending", "movie", "tv")
+        val sections = listOf("trending", "movie", "tv", "mylist")
         chips.forEachIndexed { i, chip -> chip.isSelected = sections[i] == section && query == null }
+    }
+
+    private fun updateLangLook() {
+        langChips.forEach { (chip, code) -> chip.isSelected = code == lang }
+    }
+
+    /** Called after a heart tap on any card. */
+    private fun onFavChanged() {
+        if (section == "mylist" && query == null) refresh()
     }
 
     // --------------------------------------------------------------- search
@@ -171,6 +196,24 @@ class MainActivity : AppCompatActivity() {
     }
 
     private fun load(newPage: Int, append: Boolean) {
+        // My List lives on the phone — no network needed.
+        if (section == "mylist" && query == null) {
+            loading = false
+            swipeRefresh.isRefreshing = false
+            centerProgress.visibility = View.GONE
+            footerProgress.visibility = View.GONE
+            adapter.submit(FavoritesStore.all(this), false)
+            page = 1
+            hasMore = false
+            if (adapter.isEmpty()) {
+                errorMessage.text = getString(R.string.mylist_empty_message)
+                errorView.visibility = View.VISIBLE
+            } else {
+                errorView.visibility = View.GONE
+            }
+            return
+        }
+
         if (!isOnline()) {
             swipeRefresh.isRefreshing = false
             if (adapter.isEmpty()) showOffline() else informOffline()
@@ -222,7 +265,7 @@ class MainActivity : AppCompatActivity() {
 
         val q = query
         if (q != null) Tmdb.search(q, newPage, finished, failed)
-        else Tmdb.feed(section, newPage, finished, failed)
+        else Tmdb.feed(section, lang, newPage, finished, failed)
     }
 
     private fun showOffline() {

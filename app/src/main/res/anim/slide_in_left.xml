@@ -1,0 +1,7 @@
+<?xml version="1.0" encoding="utf-8"?>
+<!-- Returning from the player: the app slides back in from the left -->
+<translate xmlns:android="http://schemas.android.com/apk/res/android"
+    android:fromXDelta="-100%p"
+    android:toXDelta="0"
+    android:duration="240"
+    android:interpolator="@android:interpolator/decelerate_quad" />

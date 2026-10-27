@@ -71,6 +71,65 @@
                 android:layout_width="wrap_content"
                 android:layout_height="wrap_content"
                 android:text="@string/chip_tv" />
+
+            <TextView
+                android:id="@+id/chipMyList"
+                style="@style/MoviieaChip"
+                android:layout_width="wrap_content"
+                android:layout_height="wrap_content"
+                android:text="@string/chip_mylist" />
+        </LinearLayout>
+    </HorizontalScrollView>
+
+    <!-- Language pills: same filter as on the website -->
+    <HorizontalScrollView
+        android:layout_width="match_parent"
+        android:layout_height="wrap_content"
+        android:background="@color/brand_dark"
+        android:paddingStart="16dp"
+        android:paddingEnd="12dp"
+        android:paddingBottom="12dp"
+        android:scrollbars="none">
+
+        <LinearLayout
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            android:orientation="horizontal">
+
+            <TextView
+                android:id="@+id/langAll"
+                style="@style/MoviieaChip"
+                android:layout_width="wrap_content"
+                android:layout_height="wrap_content"
+                android:text="@string/lang_all" />
+
+            <TextView
+                android:id="@+id/langEnglish"
+                style="@style/MoviieaChip"
+                android:layout_width="wrap_content"
+                android:layout_height="wrap_content"
+                android:text="@string/lang_english" />
+
+            <TextView
+                android:id="@+id/langHindi"
+                style="@style/MoviieaChip"
+                android:layout_width="wrap_content"
+                android:layout_height="wrap_content"
+                android:text="@string/lang_hindi" />
+
+            <TextView
+                android:id="@+id/langBengali"
+                style="@style/MoviieaChip"
+                android:layout_width="wrap_content"
+                android:layout_height="wrap_content"
+                android:text="@string/lang_bengali" />
+
+            <TextView
+                android:id="@+id/langKorean"
+                style="@style/MoviieaChip"
+                android:layout_width="wrap_content"
+                android:layout_height="wrap_content"
+                android:text="@string/lang_korean" />
         </LinearLayout>
     </HorizontalScrollView>
 

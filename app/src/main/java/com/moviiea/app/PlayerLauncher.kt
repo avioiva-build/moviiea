@@ -5,6 +5,7 @@ import android.content.Context
 import android.content.Intent
 import android.net.Uri
 import android.widget.Toast
+import androidx.browser.customtabs.CustomTabColorSchemeParams
 import androidx.browser.customtabs.CustomTabsIntent
 
 /**
@@ -24,7 +25,7 @@ import androidx.browser.customtabs.CustomTabsIntent
 object PlayerLauncher {
 
     /** The bridge page — must be reachable via GitHub Pages. */
-    const val PLAYER_PAGE = "https://avioiva-build.github.io/moviiea-app/player.html"
+    const val PLAYER_PAGE = "https://avioiva-build.github.io/moviiea/player.html"
 
     /** Flips to true after the app successfully checked the bridge exists. */
     var bridgeVerified = false
@@ -67,10 +68,18 @@ object PlayerLauncher {
     fun open(context: Context, embedUrl: String) {
         val url = bridgeUrl(embedUrl)
 
-        // 1st choice: Chrome Custom Tab (looks and feels like part of the app)
+        // 1st choice: Chrome Custom Tab styled like the app (dark Moviiea
+        // toolbar + slide animations) so playback feels built-in.
         try {
+            val scheme = CustomTabColorSchemeParams.Builder()
+                .setToolbarColor(0xFF091E49.toInt())
+                .setNavigationBarColor(0xFF091E49.toInt())
+                .build()
             CustomTabsIntent.Builder()
                 .setShowTitle(true)
+                .setDefaultColorSchemeParams(scheme)
+                .setStartAnimations(context, R.anim.slide_in_right, R.anim.slide_out_left)
+                .setExitAnimations(context, R.anim.slide_in_left, R.anim.slide_out_right)
                 .build()
                 .launchUrl(context, Uri.parse(url))
             return

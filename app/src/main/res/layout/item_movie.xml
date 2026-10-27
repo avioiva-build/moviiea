@@ -25,6 +25,20 @@
             app:layout_constraintStart_toStartOf="parent"
             app:layout_constraintTop_toTopOf="parent" />
 
+        <!-- My List heart: tap to save / unsave -->
+        <ImageButton
+            android:id="@+id/btnFav"
+            android:layout_width="34dp"
+            android:layout_height="34dp"
+            android:layout_marginTop="5dp"
+            android:layout_marginEnd="5dp"
+            android:background="@drawable/bg_heart"
+            android:contentDescription="@string/chip_mylist"
+            android:scaleType="centerInside"
+            android:src="@drawable/ic_heart"
+            app:layout_constraintEnd_toEndOf="@+id/imgPoster"
+            app:layout_constraintTop_toTopOf="@+id/imgPoster" />
+
         <TextView
             android:id="@+id/textTitle"
             android:layout_width="0dp"
