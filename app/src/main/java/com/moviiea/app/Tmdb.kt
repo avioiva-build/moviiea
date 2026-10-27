@@ -63,23 +63,21 @@ object Tmdb {
     // ------------------------------------------------------------ public API
 
     /**
-     * Browse feed: "trending", "movie", "tv" or "mylist" (mylist is handled
-     * locally by MainActivity, never fetched). [lang] is a TMDB original
-     * language code ("" = all languages, "en", "hi", "bn", "ko") — the same
-     * filter the website uses (with_original_language).
+     * Browse feed: "trending", "movie" or "tv".
+     *
+     * [lang] filters by original language ("en", "hi", "bn", "ko"...
+     * — empty string means All). Trending + a language maps to the
+     * popular movies of that language, exactly like the website does.
      */
     fun feed(section: String, lang: String, page: Int, onDone: (List<Title>) -> Unit, onError: (String) -> Unit) {
         val langParam = if (lang.isEmpty()) "" else "&with_original_language=$lang"
         val url = when {
-            section == "tv" ->
-                "$BASE/discover/tv?api_key=$API_KEY&sort_by=popularity.desc&include_adult=false$langParam&page=$page"
             section == "movie" ->
-                "$BASE/discover/movie?api_key=$API_KEY&sort_by=popularity.desc&include_adult=false$langParam&page=$page"
-            // Trending has no language filter, so a language + "Trending"
-            // combination shows the most popular movies of that language —
-            // exactly how the website builds its language rows.
+                "$BASE/discover/movie?api_key=$API_KEY&sort_by=popularity.desc&include_adult=false&page=$page$langParam"
+            section == "tv" ->
+                "$BASE/discover/tv?api_key=$API_KEY&sort_by=popularity.desc&include_adult=false&page=$page$langParam"
             lang.isNotEmpty() ->
-                "$BASE/discover/movie?api_key=$API_KEY&sort_by=popularity.desc&include_adult=false$langParam&page=$page"
+                "$BASE/discover/movie?api_key=$API_KEY&sort_by=popularity.desc&include_adult=false&with_original_language=$lang&page=$page"
             else ->
                 "$BASE/trending/all/day?api_key=$API_KEY&page=$page"
         }

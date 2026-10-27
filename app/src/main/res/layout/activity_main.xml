@@ -19,13 +19,14 @@
         android:paddingEnd="8dp"
         android:paddingBottom="10dp">
 
-        <TextView
+        <!-- Brand wordmark (vector, app colours) -->
+        <ImageView
+            android:id="@+id/imgWordmark"
             android:layout_width="wrap_content"
-            android:layout_height="wrap_content"
-            android:text="@string/app_name"
-            android:textColor="@color/brand_red"
-            android:textSize="24sp"
-            android:textStyle="bold" />
+            android:layout_height="24dp"
+            android:adjustViewBounds="true"
+            android:contentDescription="@string/app_name"
+            android:src="@drawable/ic_wordmark" />
 
         <androidx.appcompat.widget.SearchView
             android:id="@+id/searchView"
@@ -34,6 +35,16 @@
             android:layout_marginStart="8dp"
             android:layout_weight="1"
             android:theme="@style/ThemeOverlay.Moviiea.Search" />
+
+        <!-- AVIOIVA tech brand badge -->
+        <ImageView
+            android:id="@+id/imgBrandBadge"
+            android:layout_width="30dp"
+            android:layout_height="30dp"
+            android:layout_marginStart="6dp"
+            android:layout_marginEnd="6dp"
+            android:contentDescription="@string/avioiva_badge"
+            android:src="@drawable/ic_avioiva" />
     </LinearLayout>
 
     <!-- Category pills -->
@@ -77,11 +88,11 @@
                 style="@style/MoviieaChip"
                 android:layout_width="wrap_content"
                 android:layout_height="wrap_content"
-                android:text="@string/chip_mylist" />
+                android:text="@string/my_list" />
         </LinearLayout>
     </HorizontalScrollView>
 
-    <!-- Language pills: same filter as on the website -->
+    <!-- Language pills (original language of the movie/show) -->
     <HorizontalScrollView
         android:layout_width="match_parent"
         android:layout_height="wrap_content"

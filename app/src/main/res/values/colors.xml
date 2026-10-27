@@ -10,4 +10,6 @@
     <color name="text_secondary">#B7C0D0</color>
     <color name="text_on_brand">#FFFFFF</color>
     <color name="ic_launcher_background">#091E49</color>
+    <!-- AVIOIVA brand cyan (badge + About page) -->
+    <color name="avioiva_cyan">#22D3EE</color>
 </resources>

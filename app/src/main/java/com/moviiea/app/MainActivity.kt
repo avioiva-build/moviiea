@@ -1,7 +1,6 @@
 package com.moviiea.app
 
 import android.content.Context
-import android.content.Intent
 import android.net.ConnectivityManager
 import android.net.NetworkCapabilities
 import android.os.Build
@@ -23,10 +22,11 @@ import androidx.swiperefreshlayout.widget.SwipeRefreshLayout
  * Moviiea v2 — a standalone movie & TV browser.
  *
  * The app speaks directly to TMDB (the same data source the website uses):
- * a native poster grid with Trending / Movies / TV categories, instant
+ * a native poster grid with Trending / Movies / TV / My List categories,
+ * language pills (All / English / Hindi / Bengali / Korean), instant
  * search, endless scrolling and a details screen. Playback happens through
- * the player bridge in a Chrome Custom Tab, which sidesteps the video
- * servers' WebView blocking entirely.
+ * the player bridge in a styled Chrome Custom Tab, which sidesteps the
+ * video servers' WebView blocking entirely.
  */
 class MainActivity : AppCompatActivity() {
 
@@ -45,10 +45,10 @@ class MainActivity : AppCompatActivity() {
     private lateinit var searchView: SearchView
 
     private val chips = ArrayList<View>(4)
-    private lateinit var langChips: List<Pair<View, String>>
+    private val langChips = ArrayList<Pair<View, String>>(5)
 
     private var section = "trending"   // trending | movie | tv | mylist
-    private var lang = ""              // "" = all, en, hi, bn, ko
+    private var lang = ""              // "" = All, else TMDB original language code
     private var query: String? = null  // non-null while searching
     private var page = 1
     private var loading = false
@@ -68,7 +68,10 @@ class MainActivity : AppCompatActivity() {
         errorMessage = findViewById(R.id.errorMessage)
         searchView = findViewById(R.id.searchView)
 
-        adapter = GridAdapter(R.layout.item_movie, { openDetails(it) }, { onFavChanged() })
+        adapter = GridAdapter(R.layout.item_movie, { openDetails(it) }, {
+            // a heart was tapped on a card — keep My List live
+            if (section == "mylist") refresh()
+        })
         layoutManager = GridLayoutManager(this, SPAN_COUNT)
         val recycler = findViewById<RecyclerView>(R.id.recyclerGrid)
         recycler.layoutManager = layoutManager
@@ -82,55 +85,54 @@ class MainActivity : AppCompatActivity() {
         })
 
         setupChips()
+        setupLangChips()
         setupSearch()
 
         swipeRefresh.setOnRefreshListener { refresh() }
         findViewById<View>(R.id.retryButton).setOnClickListener { retry() }
 
+        // Tapping the Moviiea name or the AVIOIVA badge opens the About page.
+        findViewById<View>(R.id.imgWordmark).setOnClickListener { AboutActivity.start(this) }
+        findViewById<View>(R.id.imgBrandBadge).setOnClickListener { AboutActivity.start(this) }
+
         refresh()
+    }
+
+    override fun onResume() {
+        super.onResume()
+        // Coming back from the details screen: hearts may have changed.
+        if (section == "mylist") refresh()
     }
 
     // ------------------------------------------------------------- sections
 
     private fun setupChips() {
-        // --- Row 1: Trending / Movies / TV Shows / My List
         chips.clear()
         chips.add(findViewById(R.id.chipTrending))
         chips.add(findViewById(R.id.chipMovies))
         chips.add(findViewById(R.id.chipTv))
         chips.add(findViewById(R.id.chipMyList))
-        val sections = listOf("trending", "movie", "tv", "mylist")
         chips.forEachIndexed { index, chip ->
             chip.setOnClickListener {
-                section = sections[index]
-                query = null
-                searchView.setQuery("", false)
-                searchView.clearFocus()
-                updateChipLook()
-                refresh()
+                val target = when (index) {
+                    1 -> "movie"
+                    2 -> "tv"
+                    3 -> "mylist"
+                    else -> "trending"
+                }
+                selectSection(target)
             }
         }
         updateChipLook()
+    }
 
-        // --- Row 2: language pills (same filter the website uses)
-        langChips = listOf(
-            findViewById<View>(R.id.langAll) to "",
-            findViewById<View>(R.id.langEnglish) to "en",
-            findViewById<View>(R.id.langHindi) to "hi",
-            findViewById<View>(R.id.langBengali) to "bn",
-            findViewById<View>(R.id.langKorean) to "ko"
-        )
-        langChips.forEach { (chip, code) ->
-            chip.setOnClickListener {
-                if (lang == code) return@setOnClickListener
-                lang = code
-                updateLangLook()
-                // My List is local and search is keyword-based, so only the
-                // browsing feed reacts to language changes.
-                if (section != "mylist" && query == null) refresh()
-            }
-        }
-        updateLangLook()
+    private fun selectSection(newSection: String) {
+        section = newSection
+        query = null
+        searchView.setQuery("", false)
+        searchView.clearFocus()
+        updateChipLook()
+        refresh()
     }
 
     private fun updateChipLook() {
@@ -138,13 +140,29 @@ class MainActivity : AppCompatActivity() {
         chips.forEachIndexed { i, chip -> chip.isSelected = sections[i] == section && query == null }
     }
 
-    private fun updateLangLook() {
-        langChips.forEach { (chip, code) -> chip.isSelected = code == lang }
+    // -------------------------------------------------------- language pills
+
+    private fun setupLangChips() {
+        langChips.clear()
+        langChips.add(Pair(findViewById<View>(R.id.langAll), ""))
+        langChips.add(Pair(findViewById<View>(R.id.langEnglish), "en"))
+        langChips.add(Pair(findViewById<View>(R.id.langHindi), "hi"))
+        langChips.add(Pair(findViewById<View>(R.id.langBengali), "bn"))
+        langChips.add(Pair(findViewById<View>(R.id.langKorean), "ko"))
+        langChips.forEach { (chip, code) ->
+            chip.setOnClickListener {
+                if (lang != code) {
+                    lang = code
+                    updateLangLook()
+                    refresh()
+                }
+            }
+        }
+        updateLangLook()
     }
 
-    /** Called after a heart tap on any card. */
-    private fun onFavChanged() {
-        if (section == "mylist" && query == null) refresh()
+    private fun updateLangLook() {
+        langChips.forEach { (chip, code) -> chip.isSelected = code == lang }
     }
 
     // --------------------------------------------------------------- search
@@ -196,20 +214,20 @@ class MainActivity : AppCompatActivity() {
     }
 
     private fun load(newPage: Int, append: Boolean) {
-        // My List lives on the phone — no network needed.
-        if (section == "mylist" && query == null) {
+        // My List is stored on the device — no network involved at all.
+        if (query == null && section == "mylist") {
             loading = false
             swipeRefresh.isRefreshing = false
             centerProgress.visibility = View.GONE
             footerProgress.visibility = View.GONE
-            adapter.submit(FavoritesStore.all(this), false)
+            errorView.visibility = View.GONE
+            val saved = FavoritesStore.all(this)
+            adapter.submit(saved, false)
             page = 1
             hasMore = false
-            if (adapter.isEmpty()) {
-                errorMessage.text = getString(R.string.mylist_empty_message)
+            if (saved.isEmpty()) {
+                errorMessage.text = getString(R.string.mylist_empty)
                 errorView.visibility = View.VISIBLE
-            } else {
-                errorView.visibility = View.GONE
             }
             return
         }

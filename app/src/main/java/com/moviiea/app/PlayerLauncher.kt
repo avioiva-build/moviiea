@@ -18,6 +18,10 @@ import androidx.browser.customtabs.CustomTabsIntent
  * engine. A Chrome Custom Tab is a REAL browser engine: no blocking,
  * working fullscreen, and it slides back into the app when you press Back.
  *
+ * The tab is styled to look like part of Moviiea: the app's navy toolbar
+ * and slide-in / slide-out animations, so playback feels in-app even
+ * though Chrome's engine does the work.
+ *
  * The link is wrapped in the small player.html bridge page (hosted on
  * GitHub Pages) because the servers only serve video when they are
  * embedded inside a page — exactly like the website does it.
@@ -68,12 +72,11 @@ object PlayerLauncher {
     fun open(context: Context, embedUrl: String) {
         val url = bridgeUrl(embedUrl)
 
-        // 1st choice: Chrome Custom Tab styled like the app (dark Moviiea
-        // toolbar + slide animations) so playback feels built-in.
+        // 1st choice: Chrome Custom Tab, styled like the Moviiea app.
         try {
             val scheme = CustomTabColorSchemeParams.Builder()
-                .setToolbarColor(0xFF091E49.toInt())
-                .setNavigationBarColor(0xFF091E49.toInt())
+                .setToolbarColor(0xFF16305C.toInt())      // Moviiea surface navy
+                .setNavigationBarColor(0xFF091E49.toInt()) // Moviiea dark navy
                 .build()
             CustomTabsIntent.Builder()
                 .setShowTitle(true)

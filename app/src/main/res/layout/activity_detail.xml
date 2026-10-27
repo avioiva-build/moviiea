@@ -43,12 +43,12 @@
                 android:layout_height="1dp"
                 android:layout_weight="1" />
 
+            <!-- My List heart: tap to save / unsave -->
             <androidx.appcompat.widget.AppCompatImageView
                 android:id="@+id/btnFavDetail"
                 android:layout_width="40dp"
                 android:layout_height="40dp"
-                android:background="?attr/selectableItemBackgroundBorderless"
-                android:contentDescription="@string/chip_mylist"
+                android:contentDescription="@string/my_list"
                 android:padding="8dp"
                 android:src="@drawable/ic_heart" />
         </LinearLayout>

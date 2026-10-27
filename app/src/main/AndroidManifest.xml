@@ -43,6 +43,12 @@
             android:configChanges="orientation|screenSize|keyboardHidden"
             android:parentActivityName=".MainActivity" />
 
+        <activity
+            android:name=".AboutActivity"
+            android:exported="false"
+            android:configChanges="orientation|screenSize|keyboardHidden"
+            android:parentActivityName=".MainActivity" />
+
     </application>
 
 </manifest>

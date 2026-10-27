@@ -28,12 +28,11 @@
         <!-- My List heart: tap to save / unsave -->
         <ImageButton
             android:id="@+id/btnFav"
-            android:layout_width="34dp"
-            android:layout_height="34dp"
-            android:layout_marginTop="5dp"
-            android:layout_marginEnd="5dp"
+            android:layout_width="30dp"
+            android:layout_height="30dp"
+            android:layout_margin="6dp"
             android:background="@drawable/bg_heart"
-            android:contentDescription="@string/chip_mylist"
+            android:contentDescription="@string/my_list"
             android:scaleType="centerInside"
             android:src="@drawable/ic_heart"
             app:layout_constraintEnd_toEndOf="@+id/imgPoster"

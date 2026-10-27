@@ -5,87 +5,81 @@ import org.json.JSONArray
 import org.json.JSONObject
 
 /**
- * My List — the user's saved movies & shows.
+ * My List — the user's saved movies & shows, stored on the device.
  *
- * Everything is stored on the phone only (SharedPreferences as JSON),
- * so the list survives app restarts and works fully offline.
- * Newest additions appear first in the grid.
+ * Everything lives in one SharedPreferences entry as a JSON array,
+ * newest first. A corrupted save can never crash the app: it just
+ * comes back as an empty list.
  */
 object FavoritesStore {
 
     private const val PREFS = "moviiea_favorites"
-    private const val KEY = "items"
+    private const val KEY = "my_list"
 
-    /** In-memory copy, loaded once per app start. */
-    private val items = LinkedHashMap<Int, Tmdb.Title>()
-    private var loaded = false
-
-    private fun loadIfNeeded(context: Context) {
-        if (loaded) return
-        loaded = true
-        val raw = prefs(context).getString(KEY, null) ?: return
-        try {
-            val arr = JSONArray(raw)
-            for (i in 0 until arr.length()) {
-                val o = arr.optJSONObject(i) ?: continue
-                val name = o.optString("name")
-                if (name.isEmpty() || name == "null") continue
-                val poster = o.optString("poster")
-                items[o.optInt("id")] = Tmdb.Title(
-                    id = o.optInt("id"),
-                    isMovie = o.optBoolean("isMovie", true),
-                    name = name,
-                    poster = if (poster.isEmpty() || poster == "null") null else poster,
-                    rating = o.optDouble("rating", 0.0),
-                    year = o.optString("year")
+    /** All saved titles, newest first. */
+    fun all(context: Context): List<Tmdb.Title> {
+        val raw = prefs(context).getString(KEY, "") ?: ""
+        if (raw.isEmpty()) return emptyList()
+        return try {
+            val array = JSONArray(raw)
+            val list = ArrayList<Tmdb.Title>(array.length())
+            for (i in 0 until array.length()) {
+                val o = array.optJSONObject(i) ?: continue
+                list.add(
+                    Tmdb.Title(
+                        id = o.optInt("id"),
+                        isMovie = o.optBoolean("isMovie", true),
+                        name = o.optString("name", ""),
+                        poster = if (o.isNull("poster")) null else o.optString("poster"),
+                        rating = o.optDouble("rating", 0.0),
+                        year = o.optString("year", "")
+                    )
                 )
             }
+            list
         } catch (e: Exception) {
-            // Corrupted save -> start with an empty list rather than crash.
-            items.clear()
+            // a broken save must never crash the app
+            emptyList()
         }
     }
 
-    /** All favorites, newest first. */
-    fun all(context: Context): List<Tmdb.Title> {
-        loadIfNeeded(context)
-        return items.values.reversed()
-    }
+    fun contains(context: Context, id: Int): Boolean =
+        all(context).any { it.id == id }
 
-    fun contains(context: Context, id: Int): Boolean {
-        loadIfNeeded(context)
-        return items.containsKey(id)
-    }
-
-    /** Toggles one item. Returns true if it is now a favorite, false if removed. */
+    /** Adds/removes a title. Returns true when it is saved after the call. */
     fun toggle(context: Context, item: Tmdb.Title): Boolean {
-        loadIfNeeded(context)
-        val nowFav = if (items.containsKey(item.id)) {
-            items.remove(item.id)
+        val current = all(context).toMutableList()
+        val existing = current.indexOfFirst { it.id == item.id }
+        return if (existing >= 0) {
+            current.removeAt(existing)
+            save(context, current)
             false
         } else {
-            items[item.id] = item
+            current.add(0, item)   // newest first
+            save(context, current)
             true
         }
-        save(context)
-        return nowFav
     }
 
-    private fun save(context: Context) {
-        val arr = JSONArray()
-        for (t in items.values) {
-            val o = JSONObject()
-            o.put("id", t.id)
-            o.put("isMovie", t.isMovie)
-            o.put("name", t.name)
-            o.put("poster", t.poster ?: JSONObject.NULL)
-            o.put("rating", t.rating)
-            o.put("year", t.year)
-            arr.put(o)
+    private fun save(context: Context, titles: List<Tmdb.Title>) {
+        try {
+            val array = JSONArray()
+            for (t in titles) {
+                val o = JSONObject()
+                o.put("id", t.id)
+                o.put("isMovie", t.isMovie)
+                o.put("name", t.name)
+                o.put("poster", t.poster ?: JSONObject.NULL)
+                o.put("rating", t.rating)
+                o.put("year", t.year)
+                array.put(o)
+            }
+            prefs(context).edit().putString(KEY, array.toString()).apply()
+        } catch (e: Exception) {
+            // saving must never crash the app
         }
-        prefs(context).edit().putString(KEY, arr.toString()).apply()
     }
 
     private fun prefs(context: Context) =
-        context.applicationContext.getSharedPreferences(PREFS, Context.MODE_PRIVATE)
+        context.getSharedPreferences(PREFS, Context.MODE_PRIVATE)
 }

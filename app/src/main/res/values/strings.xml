@@ -12,15 +12,6 @@
     <string name="chip_trending">Trending</string>
     <string name="chip_movies">Movies</string>
     <string name="chip_tv">TV Shows</string>
-    <string name="chip_mylist">My List</string>
-    <string name="lang_all">All</string>
-    <string name="lang_english">English</string>
-    <string name="lang_hindi">Hindi</string>
-    <string name="lang_bengali">Bengali</string>
-    <string name="lang_korean">Korean</string>
-    <string name="mylist_empty_message">Your My List is empty.\nTap the heart on any movie or show to save it here.</string>
-    <string name="added_to_mylist">Added to My List</string>
-    <string name="removed_from_mylist">Removed from My List</string>
     <string name="no_results_message">No results found.\nTry a different search.</string>
     <string name="error_generic">Something went wrong.\nPlease try again.</string>
 
@@ -39,4 +30,38 @@
     <string name="bridge_missing_message">The one-time player setup on GitHub Pages is not active yet.\n\n1. Open your moviiea repository on github.com\n2. Go to Settings, then Pages\n3. Under Source choose: Deploy from a branch\n4. Branch: main - Folder: / (root) - then click Save\n5. Wait about one minute\n\nThen come back to the app and tap Play again.</string>
     <string name="ok">OK</string>
     <string name="details_unavailable">Could not load details.\nCheck your connection and try again.</string>
+
+    <string name="my_list">My List</string>
+    <string name="mylist_empty">Your My List is empty.\nTap the heart on any movie or show to save it here.</string>
+    <string name="added_to_mylist">Added to My List</string>
+    <string name="removed_from_mylist">Removed from My List</string>
+
+    <string name="lang_all">All</string>
+    <string name="lang_english">English</string>
+    <string name="lang_hindi">Hindi</string>
+    <string name="lang_bengali">Bengali</string>
+    <string name="lang_korean">Korean</string>
+
+    <string name="avioiva_badge">AVIOIVA</string>
+
+    <!-- About page (opens from the wordmark or the AVIOIVA badge) -->
+    <string name="about_title">About</string>
+    <string name="about_avioiva_name">AVIOIVA</string>
+    <string name="avioiva_tagline">Technology • Media • Creativity</string>
+    <string name="about_avioiva_intro">AVIOIVA is an independent digital brand focused on creating simple, refined, and user-friendly digital experiences across technology, entertainment, and creative media.</string>
+    <string name="about_app_info">App Information</string>
+    <string name="about_label_app">App</string>
+    <string name="about_label_version">Version</string>
+    <string name="about_label_developer">Developed by</string>
+    <string name="about_developer_value">AVIOIVA</string>
+    <string name="about_copyright">Copyright</string>
+    <string name="about_copyright_line">© 2026 AVIOIVA. All rights reserved.</string>
+    <string name="about_copyright_body">The software, design, branding, logo, and original materials of this application are the property of AVIOIVA unless otherwise stated. Third-party content remains the property of its respective copyright holders.</string>
+    <string name="about_contact">Contact</string>
+    <string name="about_contact_intro">For feedback, copyright concerns, or business inquiries:</string>
+    <string name="about_label_email">Email</string>
+    <string name="about_email">hex.leo.jara@gmail.com</string>
+    <string name="about_label_website">Website</string>
+    <string name="about_website">moviiea.blogspot.com</string>
+    <string name="about_made_with">Made with purpose by AVIOIVA.</string>
 </resources>

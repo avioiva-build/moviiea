@@ -1,0 +1,18 @@
+<?xml version="1.0" encoding="utf-8"?>
+<!-- MOVIIEA wordmark: white letters + red play, app colours -->
+<vector xmlns:android="http://schemas.android.com/apk/res/android"
+    android:width="116dp" android:height="28dp"
+    android:viewportWidth="116.4" android:viewportHeight="28">
+    <path android:fillColor="#FFFFFF" android:pathData="M1.0,4 L4.2,4 L4.2,24 L1.0,24 Z" />
+    <path android:fillColor="#FFFFFF" android:pathData="M13.8,4 L17.0,4 L17.0,24 L13.8,24 Z" />
+    <path android:fillColor="#FFFFFF" android:pathData="M1.0,4 L17.0,4 L10.8,14.6 L7.2,14.6 Z" />
+    <path android:fillColor="#FFFFFF" android:pathData="M43.0,4 L46.6,4 L50.5,17.4 L54.4,4 L58.0,4 L52.4,24 L48.6,24 Z" />
+    <path android:fillColor="#FFFFFF" android:pathData="M63.5,4 L66.7,4 L66.7,24 L63.5,24 Z" />
+    <path android:fillColor="#FFFFFF" android:pathData="M72.2,4 L75.4,4 L75.4,24 L72.2,24 Z" />
+    <path android:fillColor="#FFFFFF" android:pathData="M80.9,4 L93.9,4 L93.9,7.2 L80.9,7.2 Z" />
+    <path android:fillColor="#FFFFFF" android:pathData="M80.9,10.4 L90.9,10.4 L90.9,13.600000000000001 L80.9,13.600000000000001 Z" />
+    <path android:fillColor="#FFFFFF" android:pathData="M80.9,20.8 L93.9,20.8 L93.9,24 L80.9,24 Z" />
+    <path android:fillColor="#FFFFFF" android:pathData="M99.4,24 L105.4,4 L109.4,4 L115.4,24 L111.8,24 L107.4,9.8 L103.0,24 Z" />
+    <path android:fillColor="#FFFFFF" android:fillType="evenOdd" android:pathData="M22.5,14 a7.5,10 0 1,0 15.0,0 a7.5,10 0 1,0 -15.0,0 M25.6,14 a4.4,6.9 0 1,1 8.8,0 a4.4,6.9 0 1,1 -8.8,0" />
+    <path android:fillColor="#E63946" android:pathData="M6.0,16.6 L11.0,19.4 L6.0,22.2 Z" />
+</vector>

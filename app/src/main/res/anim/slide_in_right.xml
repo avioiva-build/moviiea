@@ -1,7 +1,7 @@
 <?xml version="1.0" encoding="utf-8"?>
-<!-- Player window slides in from the right (feature A) -->
+<!-- Player window slides in from the right -->
 <translate xmlns:android="http://schemas.android.com/apk/res/android"
     android:fromXDelta="100%p"
     android:toXDelta="0"
-    android:duration="240"
-    android:interpolator="@android:interpolator/decelerate_quad" />
+    android:duration="280"
+    android:interpolator="@android:anim/decelerate_interpolator" />
