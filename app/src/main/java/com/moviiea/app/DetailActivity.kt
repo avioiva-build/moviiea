@@ -3,6 +3,10 @@ package com.moviiea.app
 import android.content.Context
 import android.content.Intent
 import android.graphics.drawable.ColorDrawable
+import android.net.ConnectivityManager
+import android.net.NetworkCapabilities
+import android.net.Uri
+import android.os.Build
 import android.os.Bundle
 import android.view.View
 import android.widget.AdapterView
@@ -23,7 +27,8 @@ import coil.load
 import java.util.Locale
 
 /**
- * Details screen: artwork, storyline and the Watch box.
+ * Details screen: artwork, storyline, cast, trailer, share and the
+ * Watch box.
  *
  * The Watch box builds the exact same server links the website builds
  * (VidAPI / VidSrc / 2Embed, keyed by TMDB id) and opens them through the
@@ -31,6 +36,10 @@ import java.util.Locale
  * playback the app checks that the bridge page exists, and if GitHub Pages
  * is not enabled yet it shows friendly setup instructions instead of a
  * broken player.
+ *
+ * v2.3 additions: Watch trailer (official YouTube trailer), Share, a
+ * Cast row, a Browse episodes button for TV shows, Continue Watching
+ * recording and an offline-aware error screen.
  */
 class DetailActivity : AppCompatActivity() {
 
@@ -39,13 +48,17 @@ class DetailActivity : AppCompatActivity() {
         const val EXTRA_IS_MOVIE = "isMovie"
         const val EXTRA_TITLE = "title"
         const val EXTRA_POSTER = "poster"
+        const val EXTRA_SEASON = "season"
+        const val EXTRA_EPISODE = "episode"
 
-        fun start(context: Context, item: Tmdb.Title) {
+        fun start(context: Context, item: Tmdb.Title, season: Int = -1, episode: Int = -1) {
             val intent = Intent(context, DetailActivity::class.java)
             intent.putExtra(EXTRA_ID, item.id)
             intent.putExtra(EXTRA_IS_MOVIE, item.isMovie)
             intent.putExtra(EXTRA_TITLE, item.name)
             intent.putExtra(EXTRA_POSTER, item.poster)
+            if (season > 0) intent.putExtra(EXTRA_SEASON, season)
+            if (episode > 0) intent.putExtra(EXTRA_EPISODE, episode)
             context.startActivity(intent)
         }
     }
@@ -59,12 +72,17 @@ class DetailActivity : AppCompatActivity() {
     private lateinit var errorView: LinearLayout
     private lateinit var recyclerSimilar: RecyclerView
     private lateinit var textSimilarHeader: TextView
+    private lateinit var recyclerCast: RecyclerView
+    private lateinit var textCastHeader: TextView
     private lateinit var btnFavDetail: ImageView
 
     private var id = 0
     private var isMovie = true
     private var season = 1
     private var episode = 1
+    private var trailerKey: String? = null
+    private var pendingSeason = -1   // Continue Watching: remembered season
+    private var pendingEpisode = -1  // Continue Watching: remembered episode
     private var currentDetail: Tmdb.Details? = null
     private var initialTitle = ""
     private var initialPoster: String? = null
@@ -77,6 +95,8 @@ class DetailActivity : AppCompatActivity() {
         isMovie = intent.getBooleanExtra(EXTRA_IS_MOVIE, true)
         initialTitle = intent.getStringExtra(EXTRA_TITLE) ?: ""
         initialPoster = intent.getStringExtra(EXTRA_POSTER)
+        pendingSeason = intent.getIntExtra(EXTRA_SEASON, -1)
+        pendingEpisode = intent.getIntExtra(EXTRA_EPISODE, -1)
 
         // Instant first paint from the grid, details arrive a moment later.
         findViewById<TextView>(R.id.textTitle).text = initialTitle
@@ -94,10 +114,15 @@ class DetailActivity : AppCompatActivity() {
         errorView = findViewById(R.id.detailError)
         recyclerSimilar = findViewById(R.id.recyclerSimilar)
         textSimilarHeader = findViewById(R.id.textSimilarHeader)
+        recyclerCast = findViewById(R.id.recyclerCast)
+        textCastHeader = findViewById(R.id.textCastHeader)
 
         findViewById<AppCompatImageView>(R.id.btnBack).setOnClickListener { finish() }
         findViewById<AppCompatButton>(R.id.btnDetailRetry).setOnClickListener { loadDetails() }
         findViewById<AppCompatButton>(R.id.btnPlay).setOnClickListener { onPlayClicked() }
+        findViewById<AppCompatButton>(R.id.btnTrailer).setOnClickListener { openTrailer() }
+        findViewById<AppCompatButton>(R.id.btnEpisodes).setOnClickListener { openEpisodes() }
+        findViewById<AppCompatImageView>(R.id.btnShare).setOnClickListener { shareTitle() }
 
         btnFavDetail = findViewById(R.id.btnFavDetail)
         updateFavIcon()
@@ -117,6 +142,8 @@ class DetailActivity : AppCompatActivity() {
         styleSpinner(spinnerEpisode)
 
         recyclerSimilar.layoutManager =
+            LinearLayoutManager(this, LinearLayoutManager.HORIZONTAL, false)
+        recyclerCast.layoutManager =
             LinearLayoutManager(this, LinearLayoutManager.HORIZONTAL, false)
 
         if (isMovie) {
@@ -193,6 +220,10 @@ class DetailActivity : AppCompatActivity() {
             onDone = { details -> showDetails(details) },
             onError = {
                 progress.visibility = View.GONE
+                // Friendly message: offline vs. a temporary service problem.
+                findViewById<TextView>(R.id.detailErrorText).text = getString(
+                    if (isOnline()) R.string.details_unavailable else R.string.offline_message
+                )
                 errorView.visibility = View.VISIBLE
             }
         )
@@ -245,9 +276,20 @@ class DetailActivity : AppCompatActivity() {
             spinnerEpisode.onItemSelectedListener = listener { position ->
                 episode = position + 1
             }
-            onSeasonSelected(d, 0)
+            // Continue Watching: jump straight to the remembered season + episode.
+            // setSelection(x, false) avoids the "fires on first layout" quirk.
+            val startIdx = if (pendingSeason in d.seasons) d.seasons.indexOf(pendingSeason) else 0
+            onSeasonSelected(d, startIdx)
+            if (pendingEpisode > 0 && pendingEpisode <= d.episodesPerSeason[startIdx]) {
+                episode = pendingEpisode
+                spinnerEpisode.setSelection(pendingEpisode - 1, false)
+            }
+            spinnerSeason.setSelection(startIdx, false)
+            pendingSeason = -1
+            pendingEpisode = -1
             boxSeason.visibility = View.VISIBLE
             boxEpisode.visibility = View.VISIBLE
+            findViewById<AppCompatButton>(R.id.btnEpisodes).visibility = View.VISIBLE
         }
 
         // More like this
@@ -262,16 +304,79 @@ class DetailActivity : AppCompatActivity() {
             })
             (recyclerSimilar.adapter as GridAdapter).submit(d.similar, false)
         }
+
+        // Cast row
+        if (d.cast.isEmpty()) {
+            textCastHeader.visibility = View.GONE
+            recyclerCast.visibility = View.GONE
+        } else {
+            textCastHeader.visibility = View.VISIBLE
+            recyclerCast.visibility = View.VISIBLE
+            recyclerCast.adapter = CastAdapter()
+            (recyclerCast.adapter as CastAdapter).submit(d.cast)
+        }
+
+        // Official trailer button (hidden when TMDB has none)
+        trailerKey = d.trailerKey
+        findViewById<AppCompatButton>(R.id.btnTrailer).visibility =
+            if (trailerKey.isNullOrEmpty()) View.GONE else View.VISIBLE
+    }
+
+    // ------------------------------------------------------- trailer + share
+
+    private fun openTrailer() {
+        val key = trailerKey ?: return
+        // 1st choice: the YouTube app. 2nd: youtube.com in any browser.
+        try {
+            startActivity(Intent(Intent.ACTION_VIEW, Uri.parse("vnd.youtube:$key")))
+            return
+        } catch (e: Exception) {
+            // fall through to the browser
+        }
+        try {
+            startActivity(
+                Intent(Intent.ACTION_VIEW, Uri.parse("https://www.youtube.com/watch?v=$key"))
+            )
+        } catch (e: Exception) {
+            Toast.makeText(this, R.string.no_app_for_link, Toast.LENGTH_SHORT).show()
+        }
+    }
+
+    private fun shareTitle() {
+        val name = currentDetail?.name ?: initialTitle
+        val path = if (isMovie) "movie" else "tv"
+        val link = "https://www.themoviedb.org/$path/$id"
+        try {
+            val send = Intent(Intent.ACTION_SEND)
+            send.type = "text/plain"
+            send.putExtra(Intent.EXTRA_TEXT, getString(R.string.share_text, name, link))
+            startActivity(Intent.createChooser(send, getString(R.string.share_title)))
+        } catch (e: Exception) {
+            Toast.makeText(this, R.string.no_app_for_link, Toast.LENGTH_SHORT).show()
+        }
+    }
+
+    private fun openEpisodes() {
+        val title = currentDetail?.name ?: initialTitle
+        val poster = currentDetail?.poster ?: initialPoster
+        EpisodesActivity.start(this, id, title, poster, spinnerServer.selectedItemPosition)
     }
 
     // ------------------------------------------------------------ playback
 
     private fun onPlayClicked() {
+        // Remember this title (and episode) for Continue Watching.
+        HistoryStore.record(
+            this, asTitle(),
+            if (isMovie) 0 else season,
+            if (isMovie) 0 else episode
+        )
+
         val serverIndex = spinnerServer.selectedItemPosition
         val embed = PlayerLauncher.embedUrl(serverIndex, id, season, episode, isMovie)
 
         if (PlayerLauncher.bridgeVerified) {
-            PlayerLauncher.open(this, embed)
+            PlayerLauncher.openInApp(this, embed, currentDetail?.name ?: initialTitle)
             return
         }
 
@@ -281,7 +386,7 @@ class DetailActivity : AppCompatActivity() {
             progress.visibility = View.GONE
             if (ok) {
                 PlayerLauncher.bridgeVerified = true
-                PlayerLauncher.open(this, embed)
+                PlayerLauncher.openInApp(this, embed, currentDetail?.name ?: initialTitle)
             } else {
                 showBridgeHelp()
             }
@@ -294,5 +399,20 @@ class DetailActivity : AppCompatActivity() {
             .setMessage(R.string.bridge_missing_message)
             .setPositiveButton(R.string.ok, null)
             .show()
+    }
+
+    // ------------------------------------------------------------- utilities
+
+    private fun isOnline(): Boolean {
+        val cm = getSystemService(Context.CONNECTIVITY_SERVICE) as ConnectivityManager
+        if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.M) {
+            val network = cm.activeNetwork ?: return false
+            val caps = cm.getNetworkCapabilities(network) ?: return false
+            return caps.hasCapability(NetworkCapabilities.NET_CAPABILITY_INTERNET)
+        }
+        @Suppress("DEPRECATION")
+        val info = cm.activeNetworkInfo
+        @Suppress("DEPRECATION")
+        return info != null && info.isConnected
     }
 }

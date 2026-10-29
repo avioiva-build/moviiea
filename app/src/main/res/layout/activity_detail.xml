@@ -51,6 +51,15 @@
                 android:contentDescription="@string/my_list"
                 android:padding="8dp"
                 android:src="@drawable/ic_heart" />
+
+            <!-- Share: send this title to friends -->
+            <androidx.appcompat.widget.AppCompatImageView
+                android:id="@+id/btnShare"
+                android:layout_width="40dp"
+                android:layout_height="40dp"
+                android:contentDescription="@string/share_title"
+                android:padding="8dp"
+                android:src="@drawable/ic_share" />
         </LinearLayout>
 
         <ScrollView
@@ -236,6 +245,56 @@
                             android:textSize="16sp"
                             android:textStyle="bold" />
 
+                        <!-- Trailer + episode browser (episode button is TV-only) -->
+                        <LinearLayout
+                            android:layout_width="match_parent"
+                            android:layout_height="wrap_content"
+                            android:layout_marginTop="10dp"
+                            android:orientation="horizontal">
+
+                            <androidx.appcompat.widget.AppCompatButton
+                                android:id="@+id/btnTrailer"
+                                android:layout_width="0dp"
+                                android:layout_height="46dp"
+                                android:layout_weight="1"
+                                android:background="@drawable/bg_button_soft"
+                                android:drawableStart="@drawable/ic_trailer"
+                                android:drawablePadding="8dp"
+                                android:ellipsize="end"
+                                android:gravity="center"
+                                android:maxLines="1"
+                                android:paddingStart="10dp"
+                                android:paddingEnd="10dp"
+                                android:text="@string/watch_trailer"
+                                android:textColor="@color/text_primary"
+                                android:textSize="13sp"
+                                android:textStyle="bold"
+                                android:visibility="gone" />
+
+                            <Space
+                                android:layout_width="10dp"
+                                android:layout_height="1dp" />
+
+                            <androidx.appcompat.widget.AppCompatButton
+                                android:id="@+id/btnEpisodes"
+                                android:layout_width="0dp"
+                                android:layout_height="46dp"
+                                android:layout_weight="1"
+                                android:background="@drawable/bg_button_soft"
+                                android:drawableStart="@drawable/ic_list"
+                                android:drawablePadding="8dp"
+                                android:ellipsize="end"
+                                android:gravity="center"
+                                android:maxLines="1"
+                                android:paddingStart="10dp"
+                                android:paddingEnd="10dp"
+                                android:text="@string/btn_episodes"
+                                android:textColor="@color/text_primary"
+                                android:textSize="13sp"
+                                android:textStyle="bold"
+                                android:visibility="gone" />
+                        </LinearLayout>
+
                         <TextView
                             android:layout_width="wrap_content"
                             android:layout_height="wrap_content"
@@ -294,6 +353,28 @@
                     android:paddingEnd="16dp"
                     app:layoutManager="androidx.recyclerview.widget.LinearLayoutManager"
                     tools:listitem="@layout/item_similar" />
+
+                <TextView
+                    android:id="@+id/textCastHeader"
+                    android:layout_width="wrap_content"
+                    android:layout_height="wrap_content"
+                    android:layout_marginTop="20dp"
+                    android:text="@string/cast_header"
+                    android:textColor="@color/text_primary"
+                    android:textSize="18sp"
+                    android:textStyle="bold" />
+
+                <androidx.recyclerview.widget.RecyclerView
+                    android:id="@+id/recyclerCast"
+                    android:layout_width="match_parent"
+                    android:layout_height="wrap_content"
+                    android:layout_marginTop="10dp"
+                    android:layout_marginEnd="-16dp"
+                    android:clipToPadding="false"
+                    android:orientation="horizontal"
+                    android:paddingEnd="16dp"
+                    app:layoutManager="androidx.recyclerview.widget.LinearLayoutManager"
+                    tools:listitem="@layout/item_cast" />
             </LinearLayout>
         </ScrollView>
     </LinearLayout>
@@ -328,6 +409,7 @@
             android:layout_height="wrap_content"
             android:layout_marginTop="24dp"
             android:gravity="center"
+            android:id="@+id/detailErrorText"
             android:text="@string/details_unavailable"
             android:textColor="@color/text_secondary"
             android:textSize="15sp" />

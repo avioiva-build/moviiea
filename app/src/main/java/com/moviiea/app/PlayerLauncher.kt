@@ -12,11 +12,13 @@ import androidx.browser.customtabs.CustomTabsIntent
  * Builds the exact same video links the Moviiea website builds
  * (VidAPI / VidSrc / 2Embed, keyed by TMDB id) and opens them in Chrome.
  *
- * Why Chrome and not the app's own player? The video servers reject every
- * request that carries Android's WebView signature header
- * ("X-Requested-With"), which cannot be removed from an in-app browser
- * engine. A Chrome Custom Tab is a REAL browser engine: no blocking,
- * working fullscreen, and it slides back into the app when you press Back.
+ * v2.4: playback happens INSIDE the app first (PlayerActivity loads the
+ * same bridge page in a WebView). The servers only see the inner frame of
+ * that page, modern WebView engines no longer stamp the app's
+ * "X-Requested-With" signature on inner frames, and PlayerActivity hides
+ * the WebView tag in the user agent — so the servers treat it like Chrome.
+ * If a server still refuses, the player screen carries an
+ * "Open in Chrome" button that uses the proven Chrome path below.
  *
  * The tab is styled to look like part of Moviiea: the app's navy toolbar
  * and slide-in / slide-out animations, so playback feels in-app even
@@ -67,6 +69,14 @@ object PlayerLauncher {
             .appendQueryParameter("u", embedUrl)
             .build()
             .toString()
+
+    /**
+     * v2.4 — open playback INSIDE the app (PlayerActivity). The Chrome
+     * path below stays as the one-tap backup inside the player screen.
+     */
+    fun openInApp(context: Context, embedUrl: String, title: String) {
+        PlayerActivity.start(context, embedUrl, title)
+    }
 
     /** Open the bridge page in Chrome, with sensible fallbacks. */
     fun open(context: Context, embedUrl: String) {

@@ -13,6 +13,9 @@ import java.util.concurrent.TimeUnit
  * Talks to TMDB (The Movie Database) — the exact same data source the
  * Moviiea website uses — and turns the answers into simple Kotlin objects.
  *
+ * v2.3 additions: official trailers (YouTube keys), the cast of a title,
+ * the genre list, discover-by-genre and the episode list of a TV season.
+ *
  * All calls run on a small background thread pool and the results are
  * delivered back on the main (UI) thread, so callers can touch views
  * directly inside the callbacks.
@@ -21,6 +24,8 @@ object Tmdb {
 
     private const val API_KEY = "05902896074695709d7763505bb88b4d"
     private const val BASE = "https://api.themoviedb.org/3"
+    private const val IMG_W185 = "https://image.tmdb.org/t/p/w185"
+    private const val IMG_W300 = "https://image.tmdb.org/t/p/w300"
     private const val IMG_W342 = "https://image.tmdb.org/t/p/w342"
     private const val IMG_W500 = "https://image.tmdb.org/t/p/w500"
     private const val IMG_W780 = "https://image.tmdb.org/t/p/w780"
@@ -33,6 +38,28 @@ object Tmdb {
         val poster: String?,
         val rating: Double,
         val year: String
+    )
+
+    /** One actor in the Cast row of the details screen. */
+    data class Cast(
+        val name: String,
+        val character: String,
+        val profile: String?
+    )
+
+    /** One episode in the TV episode browser. */
+    data class Episode(
+        val number: Int,
+        val name: String,
+        val overview: String,
+        val still: String?,
+        val airDate: String
+    )
+
+    /** One entry in the genre pill row. */
+    data class Genre(
+        val id: Int,
+        val name: String
     )
 
     /** Everything the details screen shows. */
@@ -49,7 +76,9 @@ object Tmdb {
         val overview: String,
         val seasons: List<Int>,
         val episodesPerSeason: List<Int>,
-        val similar: List<Title>
+        val similar: List<Title>,
+        val trailerKey: String? = null,
+        val cast: List<Cast> = emptyList()
     )
 
     private val http = OkHttpClient.Builder()
@@ -91,13 +120,62 @@ object Tmdb {
         fetchTitles(url, "movie", onDone, onError)
     }
 
-    /** Full details for one movie or show. */
+    /** Full details for one movie or show (incl. similar, trailer, cast). */
     fun details(isMovie: Boolean, id: Int, onDone: (Details) -> Unit, onError: (String) -> Unit) {
         async({
             val path = if (isMovie) "movie" else "tv"
-            val json = get("$BASE/$path/$id?api_key=$API_KEY&append_to_response=similar")
+            val json = get("$BASE/$path/$id?api_key=$API_KEY&append_to_response=similar,videos,credits")
             parseDetails(json, isMovie)
         }, onDone, onError)
+    }
+
+    /** Episode list of one TV season (still image, name, air date, story). */
+    fun episodes(showId: Int, season: Int, onDone: (List<Episode>) -> Unit, onError: (String) -> Unit) {
+        async({
+            val json = get("$BASE/tv/$showId/season/$season?api_key=$API_KEY")
+            val eps = json.optJSONArray("episodes")
+            val list = ArrayList<Episode>()
+            if (eps != null) {
+                for (i in 0 until eps.length()) {
+                    val o = eps.optJSONObject(i) ?: continue
+                    val still = optStr(o, "still_path")
+                    list.add(
+                        Episode(
+                            number = o.optInt("episode_number", i + 1),
+                            name = optStr(o, "name"),
+                            overview = optStr(o, "overview"),
+                            still = if (still.isEmpty()) null else IMG_W300 + still,
+                            airDate = optStr(o, "air_date")
+                        )
+                    )
+                }
+            }
+            list
+        }, onDone, onError)
+    }
+
+    /** All movie genres (Action, Comedy, ...). */
+    fun genres(onDone: (List<Genre>) -> Unit, onError: (String) -> Unit) {
+        async({
+            val json = get("$BASE/genre/movie/list?api_key=$API_KEY")
+            val arr = json.optJSONArray("genres")
+            val list = ArrayList<Genre>()
+            if (arr != null) {
+                for (i in 0 until arr.length()) {
+                    val o = arr.optJSONObject(i) ?: continue
+                    val n = optStr(o, "name")
+                    if (n.isNotEmpty()) list.add(Genre(o.optInt("id"), n))
+                }
+            }
+            list
+        }, onDone, onError)
+    }
+
+    /** Popular movies of one genre, paged. */
+    fun byGenre(genreId: Int, page: Int, onDone: (List<Title>) -> Unit, onError: (String) -> Unit) {
+        val url = "$BASE/discover/movie?api_key=$API_KEY" +
+            "&sort_by=popularity.desc&include_adult=false&with_genres=$genreId&page=$page"
+        fetchTitles(url, "movie", onDone, onError)
     }
 
     /** Quick reachability check (used for the GitHub Pages player bridge). */
@@ -187,6 +265,46 @@ object Tmdb {
         return list
     }
 
+    /** Best YouTube trailer key: official first, then any trailer. */
+    private fun parseTrailerKey(json: JSONObject): String? {
+        val videos = json.optJSONObject("videos") ?: return null
+        val vids = videos.optJSONArray("results") ?: return null
+        var fallback: String? = null
+        for (i in 0 until vids.length()) {
+            val v = vids.optJSONObject(i) ?: continue
+            if (optStr(v, "site") != "YouTube") continue
+            val key = optStr(v, "key")
+            if (key.isEmpty()) continue
+            if (optStr(v, "type") == "Trailer") {
+                if (optStr(v, "name").lowercase().contains("official")) return key
+                if (fallback == null) fallback = key
+            }
+        }
+        return fallback
+    }
+
+    /** Top cast members (name, character, round profile photo). */
+    private fun parseCast(json: JSONObject): List<Cast> {
+        val credits = json.optJSONObject("credits") ?: return emptyList()
+        val castArray = credits.optJSONArray("cast") ?: return emptyList()
+        val list = ArrayList<Cast>()
+        for (i in 0 until castArray.length()) {
+            if (list.size >= 12) break
+            val o = castArray.optJSONObject(i) ?: continue
+            val actor = optStr(o, "name")
+            if (actor.isEmpty()) continue
+            val profile = optStr(o, "profile_path")
+            list.add(
+                Cast(
+                    name = actor,
+                    character = optStr(o, "character").ifEmpty { "Cast" },
+                    profile = if (profile.isEmpty()) null else IMG_W185 + profile
+                )
+            )
+        }
+        return list
+    }
+
     private fun parseDetails(json: JSONObject, isMovie: Boolean): Details {
         val name = optStr(json, "title").ifEmpty { optStr(json, "name") }
         val date = optStr(json, "release_date").ifEmpty { optStr(json, "first_air_date") }
@@ -269,7 +387,9 @@ object Tmdb {
             overview = optStr(json, "overview"),
             seasons = seasons,
             episodesPerSeason = episodes,
-            similar = similarList
+            similar = similarList,
+            trailerKey = parseTrailerKey(json),
+            cast = parseCast(json)
         )
     }
 }

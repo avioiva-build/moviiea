@@ -19,14 +19,15 @@ import androidx.recyclerview.widget.RecyclerView
 import androidx.swiperefreshlayout.widget.SwipeRefreshLayout
 
 /**
- * Moviiea v2 — a standalone movie & TV browser.
+ * Moviiea v2.3 — a standalone movie & TV browser.
  *
  * The app speaks directly to TMDB (the same data source the website uses):
- * a native poster grid with Trending / Movies / TV / My List categories,
- * language pills (All / English / Hindi / Bengali / Korean), instant
- * search, endless scrolling and a details screen. Playback happens through
- * the player bridge in a styled Chrome Custom Tab, which sidesteps the
- * video servers' WebView blocking entirely.
+ * a native poster grid with Trending / Continue Watching / Movies / TV /
+ * My List categories, language pills (All / English / Hindi / Bengali /
+ * Korean), a Genres screen, instant search, endless scrolling and a
+ * details screen. Playback happens through the player bridge in a styled
+ * Chrome Custom Tab, which sidesteps the video servers' WebView blocking
+ * entirely.
  */
 class MainActivity : AppCompatActivity() {
 
@@ -44,10 +45,10 @@ class MainActivity : AppCompatActivity() {
     private lateinit var errorMessage: TextView
     private lateinit var searchView: SearchView
 
-    private val chips = ArrayList<View>(4)
+    private val chips = ArrayList<View>(5)
     private val langChips = ArrayList<Pair<View, String>>(5)
 
-    private var section = "trending"   // trending | movie | tv | mylist
+    private var section = "trending"   // trending | recent | movie | tv | mylist
     private var lang = ""              // "" = All, else TMDB original language code
     private var query: String? = null  // non-null while searching
     private var page = 1
@@ -100,8 +101,8 @@ class MainActivity : AppCompatActivity() {
 
     override fun onResume() {
         super.onResume()
-        // Coming back from the details screen: hearts may have changed.
-        if (section == "mylist") refresh()
+        // Coming back from the details screen: hearts and history may have changed.
+        if (section == "mylist" || section == "recent") refresh()
     }
 
     // ------------------------------------------------------------- sections
@@ -109,20 +110,24 @@ class MainActivity : AppCompatActivity() {
     private fun setupChips() {
         chips.clear()
         chips.add(findViewById(R.id.chipTrending))
+        chips.add(findViewById(R.id.chipRecent))
         chips.add(findViewById(R.id.chipMovies))
         chips.add(findViewById(R.id.chipTv))
         chips.add(findViewById(R.id.chipMyList))
         chips.forEachIndexed { index, chip ->
             chip.setOnClickListener {
                 val target = when (index) {
-                    1 -> "movie"
-                    2 -> "tv"
-                    3 -> "mylist"
+                    1 -> "recent"
+                    2 -> "movie"
+                    3 -> "tv"
+                    4 -> "mylist"
                     else -> "trending"
                 }
                 selectSection(target)
             }
         }
+        // Genres opens its own browsing screen.
+        findViewById<View>(R.id.chipGenres).setOnClickListener { GenreActivity.start(this) }
         updateChipLook()
     }
 
@@ -136,7 +141,7 @@ class MainActivity : AppCompatActivity() {
     }
 
     private fun updateChipLook() {
-        val sections = listOf("trending", "movie", "tv", "mylist")
+        val sections = listOf("trending", "recent", "movie", "tv", "mylist")
         chips.forEachIndexed { i, chip -> chip.isSelected = sections[i] == section && query == null }
     }
 
@@ -214,7 +219,7 @@ class MainActivity : AppCompatActivity() {
     }
 
     private fun load(newPage: Int, append: Boolean) {
-        // My List is stored on the device — no network involved at all.
+        // My List and Continue Watching live on the device — no network at all.
         if (query == null && section == "mylist") {
             loading = false
             swipeRefresh.isRefreshing = false
@@ -227,6 +232,28 @@ class MainActivity : AppCompatActivity() {
             hasMore = false
             if (saved.isEmpty()) {
                 errorMessage.text = getString(R.string.mylist_empty)
+                errorView.visibility = View.VISIBLE
+            }
+            return
+        }
+
+        if (query == null && section == "recent") {
+            loading = false
+            swipeRefresh.isRefreshing = false
+            centerProgress.visibility = View.GONE
+            footerProgress.visibility = View.GONE
+            errorView.visibility = View.GONE
+            val entries = HistoryStore.all(this)
+            // TV cards carry the remembered episode right on the card.
+            val shown = entries.map { e ->
+                if (e.title.isMovie || e.season <= 0) e.title
+                else e.title.copy(name = "${e.title.name}  ·  S${e.season} E${e.episode}")
+            }
+            adapter.submit(shown, false)
+            page = 1
+            hasMore = false
+            if (shown.isEmpty()) {
+                errorMessage.text = getString(R.string.recent_empty)
                 errorView.visibility = View.VISIBLE
             }
             return
@@ -299,6 +326,14 @@ class MainActivity : AppCompatActivity() {
     // ---------------------------------------------------------------- details
 
     private fun openDetails(item: Tmdb.Title) {
+        // Continue Watching cards jump straight back to the remembered episode.
+        if (section == "recent") {
+            val entry = HistoryStore.all(this).firstOrNull { it.title.id == item.id }
+            if (entry != null) {
+                DetailActivity.start(this, entry.title, entry.season, entry.episode)
+                return
+            }
+        }
         DetailActivity.start(this, item)
     }
 

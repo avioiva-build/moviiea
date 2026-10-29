@@ -49,6 +49,24 @@
             android:configChanges="orientation|screenSize|keyboardHidden"
             android:parentActivityName=".MainActivity" />
 
+        <activity
+            android:name=".GenreActivity"
+            android:exported="false"
+            android:configChanges="orientation|screenSize|keyboardHidden"
+            android:parentActivityName=".MainActivity" />
+
+        <activity
+            android:name=".EpisodesActivity"
+            android:exported="false"
+            android:configChanges="orientation|screenSize|keyboardHidden"
+            android:parentActivityName=".DetailActivity" />
+
+        <activity
+            android:name=".PlayerActivity"
+            android:exported="false"
+            android:configChanges="orientation|screenSize|keyboardHidden"
+            android:parentActivityName=".DetailActivity" />
+
     </application>
 
 </manifest>

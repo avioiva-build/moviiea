@@ -89,6 +89,20 @@
                 android:layout_width="wrap_content"
                 android:layout_height="wrap_content"
                 android:text="@string/my_list" />
+
+            <TextView
+                android:id="@+id/chipRecent"
+                style="@style/MoviieaChip"
+                android:layout_width="wrap_content"
+                android:layout_height="wrap_content"
+                android:text="@string/chip_recent" />
+
+            <TextView
+                android:id="@+id/chipGenres"
+                style="@style/MoviieaChip"
+                android:layout_width="wrap_content"
+                android:layout_height="wrap_content"
+                android:text="@string/chip_genres" />
         </LinearLayout>
     </HorizontalScrollView>
 
