@@ -85,4 +85,6 @@
     <string name="player_error_message">The video did not load.\nCheck your connection and try again.</string>
     <string name="cd_close_player">Close player</string>
     <string name="player_refused_message">This server refused to play inside Moviiea.\nTry another server on the details page, or tap the Chrome button in the top corner.</string>
+    <string name="player_log_title">Player log</string>
+    <string name="player_log_hint">If a video will not play, send a screenshot of this list to the developer.</string>
 </resources>
