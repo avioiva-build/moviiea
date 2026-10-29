@@ -84,4 +84,5 @@
     <string name="open_in_chrome">Open in Chrome</string>
     <string name="player_error_message">The video did not load.\nCheck your connection and try again.</string>
     <string name="cd_close_player">Close player</string>
+    <string name="player_refused_message">This server refused to play inside Moviiea.\nTry another server on the details page, or tap the Chrome button in the top corner.</string>
 </resources>
