@@ -12,17 +12,13 @@ import androidx.browser.customtabs.CustomTabsIntent
  * Builds the exact same video links the Moviiea website builds
  * (VidAPI / VidSrc / 2Embed, keyed by TMDB id) and opens them in Chrome.
  *
- * v2.4: playback happens INSIDE the app first (PlayerActivity loads the
- * same bridge page in a WebView). The servers only see the inner frame of
- * that page, modern WebView engines no longer stamp the app's
- * "X-Requested-With" signature on inner frames, and PlayerActivity hides
- * the WebView tag in the user agent — so the servers treat it like Chrome.
- * If a server still refuses, the player screen carries an
- * "Open in Chrome" button that uses the proven Chrome path below.
- *
- * The tab is styled to look like part of Moviiea: the app's navy toolbar
- * and slide-in / slide-out animations, so playback feels in-app even
- * though Chrome's engine does the work.
+ * v2.7: playback goes back to the PROVEN external path — a Chrome
+ * Custom Tab styled like the Moviiea app (navy toolbar, slide
+ * animations). The video servers keep blocking WebView engines with ad
+ * pop-ups and empty pages, so the in-app player screen is parked for
+ * now: PlayerActivity (the v2.6 code) stays in the project, but nothing
+ * opens it. openInApp() below is the ready-made switch for the day we
+ * revive the in-app player.
  *
  * The link is wrapped in the small player.html bridge page (hosted on
  * GitHub Pages) because the servers only serve video when they are
@@ -71,8 +67,9 @@ object PlayerLauncher {
             .toString()
 
     /**
-     * v2.4 — open playback INSIDE the app (PlayerActivity). The Chrome
-     * path below stays as the one-tap backup inside the player screen.
+     * PARKED (future in-app player): opens playback INSIDE the app via
+     * PlayerActivity. The video servers currently block WebView engines,
+     * so nothing calls this in v2.7 — kept ready for later work.
      */
     fun openInApp(context: Context, embedUrl: String, title: String) {
         PlayerActivity.start(context, embedUrl, title)

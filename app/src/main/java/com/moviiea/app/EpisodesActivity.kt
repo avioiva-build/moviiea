@@ -167,10 +167,9 @@ class EpisodesActivity : AppCompatActivity() {
             selectedSeason,
             ep.number
         )
-        PlayerLauncher.openInApp(
+        PlayerLauncher.open(
             this,
-            PlayerLauncher.embedUrl(serverIndex, showId, selectedSeason, ep.number, false),
-            showTitle
+            PlayerLauncher.embedUrl(serverIndex, showId, selectedSeason, ep.number, false)
         )
     }
 

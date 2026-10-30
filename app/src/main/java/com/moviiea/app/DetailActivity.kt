@@ -376,7 +376,7 @@ class DetailActivity : AppCompatActivity() {
         val embed = PlayerLauncher.embedUrl(serverIndex, id, season, episode, isMovie)
 
         if (PlayerLauncher.bridgeVerified) {
-            PlayerLauncher.openInApp(this, embed, currentDetail?.name ?: initialTitle)
+            PlayerLauncher.open(this, embed)
             return
         }
 
@@ -386,7 +386,7 @@ class DetailActivity : AppCompatActivity() {
             progress.visibility = View.GONE
             if (ok) {
                 PlayerLauncher.bridgeVerified = true
-                PlayerLauncher.openInApp(this, embed, currentDetail?.name ?: initialTitle)
+                PlayerLauncher.open(this, embed)
             } else {
                 showBridgeHelp()
             }

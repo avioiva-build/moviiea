@@ -20,7 +20,7 @@
     <string name="season_label">Season</string>
     <string name="episode_label">Episode</string>
     <string name="play">Play</string>
-    <string name="play_hint">Playback opens right inside Moviiea. If a server refuses, use the Chrome button in the player.</string>
+    <string name="play_hint">Playback opens in your browser — the same proven Chrome way as the Moviiea website. If a video refuses, try another server.</string>
     <string name="server_tip">If one server fails, try another one above.</string>
     <string name="overview_title">Storyline</string>
     <string name="more_like_this">More like this</string>
